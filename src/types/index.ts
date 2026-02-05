@@ -56,7 +56,6 @@ export type ToolType =
   | 'arrow'
   | 'pen'
   | 'text'
-  | 'image'
   | 'disappearing-pen'
   | 'pan'
 

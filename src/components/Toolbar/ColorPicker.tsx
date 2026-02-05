@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Box, Popover, IconButton, Tooltip } from '@mui/material'
-import { Palette } from '@mui/icons-material'
 
 interface ColorPickerProps {
   color: string

@@ -1,41 +1,12 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { useCanvasStore, useThemeStore } from '../stores'
 import { createRoughCanvas, drawElement } from '../utils/roughHelpers'
-import { getCanvasBackground, getGridColor } from '../theme'
-
-const GRID_SIZE = 20
+import { getCanvasBackground } from '../theme'
 
 export function useCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { elements, viewport, currentElement } = useCanvasStore()
   const { isDark } = useThemeStore()
-
-  const drawGrid = useCallback(
-    (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-      const gridColor = getGridColor(isDark)
-      ctx.strokeStyle = gridColor
-      ctx.lineWidth = 1
-
-      const offsetX = viewport.x % (GRID_SIZE * viewport.zoom)
-      const offsetY = viewport.y % (GRID_SIZE * viewport.zoom)
-      const scaledGrid = GRID_SIZE * viewport.zoom
-
-      for (let x = offsetX; x < width; x += scaledGrid) {
-        ctx.beginPath()
-        ctx.moveTo(x, 0)
-        ctx.lineTo(x, height)
-        ctx.stroke()
-      }
-
-      for (let y = offsetY; y < height; y += scaledGrid) {
-        ctx.beginPath()
-        ctx.moveTo(0, y)
-        ctx.lineTo(width, y)
-        ctx.stroke()
-      }
-    },
-    [viewport, isDark]
-  )
 
   const render = useCallback(() => {
     const canvas = canvasRef.current
@@ -52,8 +23,6 @@ export function useCanvas() {
     ctx.fillStyle = getCanvasBackground(isDark)
     ctx.fillRect(0, 0, width, height)
 
-    drawGrid(ctx, width, height)
-
     ctx.save()
     ctx.translate(viewport.x, viewport.y)
     ctx.scale(viewport.zoom, viewport.zoom)
@@ -69,7 +38,7 @@ export function useCanvas() {
     }
 
     ctx.restore()
-  }, [elements, viewport, currentElement, isDark, drawGrid])
+  }, [elements, viewport, currentElement, isDark])
 
   useEffect(() => {
     render()

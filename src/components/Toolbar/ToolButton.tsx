@@ -1,7 +1,7 @@
+import type { ReactNode } from 'react'
 import { IconButton, Tooltip } from '@mui/material'
 import { useToolStore } from '../../stores'
 import type { ToolType } from '../../types'
-import { ReactNode } from 'react'
 
 interface ToolButtonProps {
   tool: ToolType

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Box } from '@mui/material'
-import { useCanvasStore, useToolStore, useThemeStore } from '../../stores'
+import { useCanvasStore, useThemeStore } from '../../stores'
 
 interface TextInputProps {
   x: number
@@ -11,17 +11,32 @@ interface TextInputProps {
 
 export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
   const [value, setValue] = useState('')
+  const [fontSize, setFontSize] = useState(24)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { viewport } = useCanvasStore()
-  const { strokeWidth } = useToolStore()
   const { isDark } = useThemeStore()
   const textColor = isDark ? '#ffffff' : '#1e1e1e'
+
+  const updateFontSize = useCallback(() => {
+    if (inputRef.current) {
+      const height = inputRef.current.offsetHeight
+      const newSize = Math.max(16, Math.min(height * 0.4, 120))
+      setFontSize(newSize)
+    }
+  }, [])
 
   useEffect(() => {
     setTimeout(() => {
       inputRef.current?.focus()
     }, 10)
-  }, [])
+
+    const textarea = inputRef.current
+    if (!textarea) return
+
+    const observer = new ResizeObserver(updateFontSize)
+    observer.observe(textarea)
+    return () => observer.disconnect()
+  }, [updateFontSize])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation()
@@ -67,7 +82,7 @@ export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
           minWidth: 200,
           minHeight: 40,
           padding: '8px 12px',
-          fontSize: Math.max(16, strokeWidth * 6),
+          fontSize,
           color: textColor,
           fontFamily: '"Virgil", "Caveat", "Segoe Print", cursive',
           backgroundColor: 'transparent',

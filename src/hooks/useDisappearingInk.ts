@@ -5,7 +5,7 @@ const FADE_DELAY = 3000
 const FADE_DURATION = 1000
 
 export function useDisappearingInk() {
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | null>(null)
   const { elements, updateElement, deleteElements } = useCanvasStore()
 
   useEffect(() => {

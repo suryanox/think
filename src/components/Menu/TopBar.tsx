@@ -1,4 +1,4 @@
-import { Box, Paper } from '@mui/material'
+import { Paper } from '@mui/material'
 import { FileMenu } from './FileMenu'
 import { UndoRedo } from './UndoRedo'
 import { ThemeToggle } from '../common/ThemeToggle'

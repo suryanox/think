@@ -62,6 +62,3 @@ export const darkTheme = createTheme({
 
 export const getCanvasBackground = (isDark: boolean) => 
   isDark ? '#1e293b' : '#ffffff'
-
-export const getGridColor = (isDark: boolean) =>
-  isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'

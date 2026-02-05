@@ -1,4 +1,4 @@
-import { Box, Paper, Divider } from '@mui/material'
+import { Paper, Divider } from '@mui/material'
 import {
   NearMe,
   CropSquare,
@@ -7,7 +7,6 @@ import {
   TrendingFlat,
   Create,
   TextFields,
-  Image,
   AutoFixHigh,
   PanTool,
 } from '@mui/icons-material'
@@ -47,7 +46,6 @@ export function Toolbar() {
       <ToolButton tool="pen" icon={<Create />} label="Pen" shortcut="P" />
       <ToolButton tool="disappearing-pen" icon={<AutoFixHigh />} label="Disappearing Pen" shortcut="D" />
       <ToolButton tool="text" icon={<TextFields />} label="Text" shortcut="T" />
-      <ToolButton tool="image" icon={<Image />} label="Image" />
       <Divider sx={{ my: 0.5 }} />
       <ColorPicker color={strokeColor} onChange={setStrokeColor} label="Stroke color" />
       <ColorPicker color={fillColor} onChange={setFillColor} label="Fill color" />
