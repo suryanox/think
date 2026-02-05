@@ -1,6 +1,7 @@
 import rough from 'roughjs'
 import type { CanvasElement } from '../types'
 import { RoughCanvas } from 'roughjs/bin/canvas'
+import { getThemeAwareColor } from '../theme'
 
 export function createRoughCanvas(canvas: HTMLCanvasElement): RoughCanvas {
   return rough.canvas(canvas)
@@ -9,14 +10,18 @@ export function createRoughCanvas(canvas: HTMLCanvasElement): RoughCanvas {
 export function drawElement(
   rc: RoughCanvas,
   ctx: CanvasRenderingContext2D,
-  element: CanvasElement
+  element: CanvasElement,
+  isDark: boolean = true
 ) {
   ctx.save()
   ctx.globalAlpha = element.opacity
 
+  const strokeColor = getThemeAwareColor(element.strokeColor, isDark)
+  const fillColor = getThemeAwareColor(element.fillColor, isDark)
+
   const options = {
-    stroke: element.strokeColor,
-    fill: element.fillColor === 'transparent' ? undefined : element.fillColor,
+    stroke: strokeColor,
+    fill: fillColor === 'transparent' ? undefined : fillColor,
     strokeWidth: element.strokeWidth,
     roughness: element.roughness ?? 1,
     seed: element.seed ?? 1,
@@ -76,7 +81,7 @@ export function drawElement(
 
     case 'pen':
       if (element.points && element.points.length > 1) {
-        drawFreehandPath(ctx, element)
+        drawFreehandPath(ctx, element, strokeColor)
       }
       break
 
@@ -88,7 +93,7 @@ export function drawElement(
 
     case 'text':
       ctx.font = `${element.strokeWidth * 8}px "Virgil", "Segoe Print", "Comic Sans MS", cursive`
-      ctx.fillStyle = element.strokeColor
+      ctx.fillStyle = strokeColor
       ctx.fillText(element.text || '', element.x, element.y)
       break
 
@@ -104,11 +109,11 @@ export function drawElement(
   ctx.restore()
 }
 
-function drawFreehandPath(ctx: CanvasRenderingContext2D, element: CanvasElement) {
+function drawFreehandPath(ctx: CanvasRenderingContext2D, element: CanvasElement, strokeColor: string) {
   if (!element.points || element.points.length < 2) return
 
   ctx.beginPath()
-  ctx.strokeStyle = element.strokeColor
+  ctx.strokeStyle = strokeColor
   ctx.lineWidth = element.strokeWidth
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'

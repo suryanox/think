@@ -30,11 +30,11 @@ export function useCanvas() {
     const rc = createRoughCanvas(canvas)
 
     for (const element of elements) {
-      drawElement(rc, ctx, element)
+      drawElement(rc, ctx, element, isDark)
     }
 
     if (currentElement) {
-      drawElement(rc, ctx, currentElement)
+      drawElement(rc, ctx, currentElement, isDark)
     }
 
     ctx.restore()
