@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { v4 as uuid } from 'uuid'
 import { useCanvas, usePan, useZoom } from '../../hooks'
-import { useCanvasStore, useToolStore, useHistoryStore } from '../../stores'
+import { useCanvasStore, useToolStore, useHistoryStore, useThemeStore } from '../../stores'
 import { screenToCanvas, normalizeRect, isPointInElement } from '../../utils/geometry'
 import { SelectionBox } from './SelectionBox'
 import { TextInput } from './TextInput'
@@ -10,7 +10,7 @@ import type { CanvasElement, Point } from '../../types'
 
 export function Canvas() {
   const { canvasRef } = useCanvas()
-  const { startPan, updatePan, endPan, isPanning } = usePan()
+  const { startPan, updatePan, endPan } = usePan()
   const { handleWheel } = useZoom()
   const containerRef = useRef<HTMLDivElement>(null)
   const spacePressed = useRef(false)
@@ -29,8 +29,10 @@ export function Canvas() {
     updateElement,
   } = useCanvasStore()
 
-  const { activeTool, strokeColor, fillColor, strokeWidth, opacity } = useToolStore()
+  const { activeTool, strokeColor, fillColor, strokeWidth, opacity, getDefaultStrokeColor } = useToolStore()
   const { pushState } = useHistoryStore()
+  const { isDark } = useThemeStore()
+  const effectiveStrokeColor = strokeColor || getDefaultStrokeColor()
 
   useEffect(() => {
     const container = containerRef.current
@@ -70,6 +72,7 @@ export function Canvas() {
 
   const createElement = useCallback(
     (point: Point): CanvasElement => {
+      const defaultColor = isDark ? '#ffffff' : '#1e1e1e'
       const base: CanvasElement = {
         id: uuid(),
         type: activeTool === 'select' || activeTool === 'pan' ? 'rectangle' : activeTool,
@@ -78,11 +81,12 @@ export function Canvas() {
         width: 0,
         height: 0,
         rotation: 0,
-        strokeColor,
+        strokeColor: effectiveStrokeColor || defaultColor,
         fillColor,
         strokeWidth,
         opacity,
         roughness: 1,
+        seed: Math.floor(Math.random() * 2147483647),
       }
 
       if (activeTool === 'pen' || activeTool === 'disappearing-pen') {
@@ -102,7 +106,7 @@ export function Canvas() {
 
       return base
     },
-    [activeTool, strokeColor, fillColor, strokeWidth, opacity]
+    [activeTool, effectiveStrokeColor, fillColor, strokeWidth, opacity, isDark]
   )
 
   const handleMouseDown = useCallback(
@@ -253,6 +257,7 @@ export function Canvas() {
           strokeWidth: 0,
           opacity: 1,
           imageData: event.target?.result as string,
+          seed: Math.floor(Math.random() * 2147483647),
         }
         pushState(elements)
         addElement(element)
@@ -287,6 +292,7 @@ export function Canvas() {
               strokeWidth: 0,
               opacity: 1,
               imageData: event.target?.result as string,
+              seed: Math.floor(Math.random() * 2147483647),
             }
             pushState(elements)
             addElement(element)
@@ -305,20 +311,6 @@ export function Canvas() {
   }, [handlePaste])
 
   const dragStartRef = useRef<Point | null>(null)
-
-  const handleDragStart = useCallback(
-    (e: React.MouseEvent) => {
-      if (activeTool !== 'select' || selectedIds.length === 0) return
-      const point = getCanvasPoint(e)
-      const clickedSelected = elements.find(
-        (el) => selectedIds.includes(el.id) && isPointInElement(point, el)
-      )
-      if (clickedSelected) {
-        dragStartRef.current = point
-      }
-    },
-    [activeTool, selectedIds, elements, getCanvasPoint]
-  )
 
   const handleDrag = useCallback(
     (e: React.MouseEvent) => {
@@ -348,10 +340,23 @@ export function Canvas() {
 
   const combinedMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      handleDragStart(e)
+      if (activeTool === 'select') {
+        const point = getCanvasPoint(e)
+        const clickedElement = [...elements].reverse().find((el) => isPointInElement(point, el))
+        
+        if (clickedElement) {
+          if (!selectedIds.includes(clickedElement.id)) {
+            setSelectedIds([clickedElement.id])
+          }
+          dragStartRef.current = point
+          return
+        } else {
+          setSelectedIds([])
+        }
+      }
       handleMouseDown(e)
     },
-    [handleDragStart, handleMouseDown]
+    [activeTool, elements, selectedIds, setSelectedIds, getCanvasPoint, handleMouseDown]
   )
 
   const combinedMouseMove = useCallback(
@@ -373,6 +378,7 @@ export function Canvas() {
   const handleTextSubmit = useCallback(
     (text: string) => {
       if (!textInputPos) return
+      const defaultColor = isDark ? '#ffffff' : '#1e1e1e'
       const element: CanvasElement = {
         id: uuid(),
         type: 'text',
@@ -381,17 +387,18 @@ export function Canvas() {
         width: text.length * strokeWidth * 5,
         height: strokeWidth * 10,
         rotation: 0,
-        strokeColor,
+        strokeColor: effectiveStrokeColor || defaultColor,
         fillColor: 'transparent',
         strokeWidth,
         opacity,
         text,
+        seed: Math.floor(Math.random() * 2147483647),
       }
       pushState(elements)
       addElement(element)
       setTextInputPos(null)
     },
-    [textInputPos, strokeColor, strokeWidth, opacity, elements, pushState, addElement]
+    [textInputPos, effectiveStrokeColor, strokeWidth, opacity, elements, pushState, addElement, isDark]
   )
 
   const handleTextCancel = useCallback(() => {

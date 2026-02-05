@@ -19,6 +19,7 @@ export function drawElement(
     fill: element.fillColor === 'transparent' ? undefined : element.fillColor,
     strokeWidth: element.strokeWidth,
     roughness: element.roughness ?? 1,
+    seed: element.seed ?? 1,
   }
 
   switch (element.type) {
@@ -86,7 +87,7 @@ export function drawElement(
       break
 
     case 'text':
-      ctx.font = `${element.strokeWidth * 8}px "JetBrains Mono", "Fira Code", monospace`
+      ctx.font = `${element.strokeWidth * 8}px "Virgil", "Segoe Print", "Comic Sans MS", cursive`
       ctx.fillStyle = element.strokeColor
       ctx.fillText(element.text || '', element.x, element.y)
       break

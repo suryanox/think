@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tooltip, Divider } from '@mui/material'
-import { Menu as MenuIcon, FileOpen, Save, Delete, Image, Code } from '@mui/icons-material'
+import { Menu as MenuIcon, FileOpen, Save, Delete, Code } from '@mui/icons-material'
 import { useCanvasStore, useHistoryStore } from '../../stores'
-import { downloadJSON, importFromJSON, exportToSVG } from '../../utils/export'
+import { downloadJSON, importFromJSON } from '../../utils/export'
 import { saveToLocalStorage, clearLocalStorage } from '../../utils/storage'
 
 export function FileMenu() {
@@ -18,11 +18,6 @@ export function FileMenu() {
 
   const handleExportJSON = () => {
     downloadJSON(elements)
-    setAnchorEl(null)
-  }
-
-  const handleExportSVG = () => {
-    exportToSVG(elements)
     setAnchorEl(null)
   }
 
@@ -88,12 +83,6 @@ export function FileMenu() {
             <Code fontSize="small" />
           </ListItemIcon>
           <ListItemText>Export as JSON</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleExportSVG}>
-          <ListItemIcon>
-            <Image fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Export as SVG</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleClear}>

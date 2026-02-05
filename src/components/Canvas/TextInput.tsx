@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { InputBase } from '@mui/material'
-import { useCanvasStore, useToolStore } from '../../stores'
+import { Box } from '@mui/material'
+import { useCanvasStore, useToolStore, useThemeStore } from '../../stores'
 
 interface TextInputProps {
   x: number
@@ -11,9 +11,11 @@ interface TextInputProps {
 
 export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
   const [value, setValue] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const { viewport } = useCanvasStore()
-  const { strokeColor, strokeWidth } = useToolStore()
+  const { strokeWidth } = useToolStore()
+  const { isDark } = useThemeStore()
+  const textColor = isDark ? '#ffffff' : '#1e1e1e'
 
   useEffect(() => {
     setTimeout(() => {
@@ -22,6 +24,7 @@ export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
   }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation()
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (value.trim()) {
@@ -35,43 +38,46 @@ export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
     }
   }
 
-  const handleBlur = () => {
-    if (value.trim()) {
-      onSubmit(value)
-    } else {
-      onCancel()
-    }
-  }
-
   const screenX = x * viewport.zoom + viewport.x
   const screenY = y * viewport.zoom + viewport.y
 
+  const stopPropagation = (e: React.MouseEvent) => {
+    e.stopPropagation()
+  }
+
   return (
-    <InputBase
-      inputRef={inputRef}
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
-      autoFocus
-      multiline
-      placeholder="Type here..."
+    <Box
+      onMouseDown={stopPropagation}
+      onClick={stopPropagation}
       sx={{
         position: 'absolute',
         left: screenX,
         top: screenY - 8,
-        minWidth: 150,
-        padding: '4px 8px',
-        fontSize: strokeWidth * 8,
-        color: strokeColor,
-        fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 1,
-        border: '2px solid',
-        borderColor: 'primary.main',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         zIndex: 1000,
       }}
-    />
+    >
+      <textarea
+        ref={inputRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        placeholder="Type here..."
+        style={{
+          minWidth: 200,
+          minHeight: 40,
+          padding: '8px 12px',
+          fontSize: Math.max(16, strokeWidth * 6),
+          color: textColor,
+          fontFamily: '"Virgil", "Caveat", "Segoe Print", cursive',
+          backgroundColor: 'transparent',
+          borderRadius: 8,
+          border: '2px dashed #6366f1',
+          resize: 'both',
+          outline: 'none',
+          overflow: 'auto',
+        }}
+      />
+    </Box>
   )
 }

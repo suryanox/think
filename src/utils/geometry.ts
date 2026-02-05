@@ -23,6 +23,17 @@ export function canvasToScreen(
 }
 
 export function getElementBounds(element: CanvasElement): SelectionBounds {
+  if (element.type === 'text') {
+    const textWidth = (element.text?.length || 1) * element.strokeWidth * 5
+    const textHeight = element.strokeWidth * 10
+    return {
+      x: element.x,
+      y: element.y - textHeight,
+      width: Math.max(textWidth, 20),
+      height: textHeight,
+    }
+  }
+  
   if (element.points && element.points.length > 0) {
     const xs = element.points.map((p) => p.x)
     const ys = element.points.map((p) => p.y)
@@ -33,22 +44,23 @@ export function getElementBounds(element: CanvasElement): SelectionBounds {
     return {
       x: element.x + minX,
       y: element.y + minY,
-      width: maxX - minX,
-      height: maxY - minY,
+      width: Math.max(maxX - minX, 10),
+      height: Math.max(maxY - minY, 10),
     }
   }
+  
   return {
     x: element.x,
     y: element.y,
-    width: element.width,
-    height: element.height,
+    width: Math.max(element.width, 10),
+    height: Math.max(element.height, 10),
   }
 }
 
 export function isPointInElement(
   point: Point,
   element: CanvasElement,
-  threshold = 5
+  threshold = 10
 ): boolean {
   const bounds = getElementBounds(element)
   const padding = threshold

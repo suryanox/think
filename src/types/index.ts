@@ -30,6 +30,7 @@ export interface CanvasElement {
   text?: string
   imageData?: string
   roughness?: number
+  seed?: number
   createdAt?: number
   fadeStartTime?: number
 }
