@@ -21,7 +21,7 @@
 - Freehand drawing
 - Disappearing ink pen
 - Dark/Light mode
-- Export to JSON & SVG
+- Export to JSON
 - Keyboard shortcuts
 
 ### Quick Start

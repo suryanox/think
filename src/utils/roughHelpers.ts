@@ -62,15 +62,8 @@ export function drawElement(
       break
 
     case 'line':
-      if (element.points && element.points.length >= 2) {
-        const [start, end] = element.points
-        rc.line(
-          element.x + start.x,
-          element.y + start.y,
-          element.x + end.x,
-          element.y + end.y,
-          options
-        )
+      if (element.points && element.points.length > 1) {
+        drawFreehandPath(ctx, element, strokeColor)
       }
       break
 

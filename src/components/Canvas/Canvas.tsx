@@ -89,7 +89,7 @@ export function Canvas() {
         seed: Math.floor(Math.random() * 2147483647),
       }
 
-      if (activeTool === 'pen' || activeTool === 'disappearing-pen') {
+      if (activeTool === 'pen' || activeTool === 'disappearing-pen' || activeTool === 'line') {
         base.points = [{ x: 0, y: 0 }]
         if (activeTool === 'disappearing-pen') {
           base.createdAt = Date.now()
@@ -97,7 +97,7 @@ export function Canvas() {
         }
       }
 
-      if (activeTool === 'line' || activeTool === 'arrow') {
+      if (activeTool === 'arrow') {
         base.points = [
           { x: 0, y: 0 },
           { x: 0, y: 0 },
@@ -191,7 +191,6 @@ export function Canvas() {
           }
           break
         }
-        case 'line':
         case 'arrow':
           updates = {
             width: Math.abs(dx),
@@ -202,6 +201,7 @@ export function Canvas() {
             ],
           }
           break
+        case 'line':
         case 'pen':
         case 'disappearing-pen':
           updates = {

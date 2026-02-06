@@ -20,7 +20,7 @@ export const useToolStore = create<ToolState>((set, get) => ({
   activeTool: 'select',
   strokeColor: '',
   fillColor: 'transparent',
-  strokeWidth: 4,
+  strokeWidth: 8,
   opacity: 1,
   setTool: (tool) => set({ activeTool: tool }),
   setStrokeColor: (color) => set({ strokeColor: color }),

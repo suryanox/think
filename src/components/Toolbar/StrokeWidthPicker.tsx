@@ -12,9 +12,23 @@ export function StrokeWidthPicker({ value, onChange }: StrokeWidthPickerProps) {
 
   return (
     <>
-      <Tooltip title="Stroke width">
-        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-          <LineWeight />
+      <Tooltip title="Stroke width" placement="right" arrow>
+        <IconButton 
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          size="small"
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: 1.5,
+            color: 'text.secondary',
+            transition: 'all 0.15s ease',
+            '&:hover': {
+              color: 'text.primary',
+              transform: 'scale(1.05)',
+            },
+          }}
+        >
+          <LineWeight fontSize="small" />
         </IconButton>
       </Tooltip>
       <Popover
@@ -23,10 +37,18 @@ export function StrokeWidthPicker({ value, onChange }: StrokeWidthPickerProps) {
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
         transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            },
+          },
+        }}
       >
-        <Box sx={{ p: 2, width: 150 }}>
-          <Typography variant="caption" gutterBottom>
-            Stroke width: {value}px
+        <Box sx={{ p: 2, width: 160 }}>
+          <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.secondary' }}>
+            Stroke: {value}px
           </Typography>
           <Slider
             value={value}
@@ -35,6 +57,7 @@ export function StrokeWidthPicker({ value, onChange }: StrokeWidthPickerProps) {
             max={20}
             step={1}
             size="small"
+            sx={{ mt: 1 }}
           />
         </Box>
       </Popover>
