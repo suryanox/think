@@ -5,6 +5,7 @@ import { getCanvasBackground } from '../theme'
 
 export function useCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const renderRef = useRef<() => void>(() => {})
   const { elements, viewport, currentElement } = useCanvasStore()
   const { isDark } = useThemeStore()
 
@@ -29,16 +30,20 @@ export function useCanvas() {
 
     const rc = createRoughCanvas(canvas)
 
+    const handleImageLoad = () => renderRef.current()
+
     for (const element of elements) {
-      drawElement(rc, ctx, element, isDark)
+      drawElement(rc, ctx, element, isDark, handleImageLoad)
     }
 
     if (currentElement) {
-      drawElement(rc, ctx, currentElement, isDark)
+      drawElement(rc, ctx, currentElement, isDark, handleImageLoad)
     }
 
     ctx.restore()
   }, [elements, viewport, currentElement, isDark])
+
+  renderRef.current = render
 
   useEffect(() => {
     render()

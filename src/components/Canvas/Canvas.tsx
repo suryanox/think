@@ -3,10 +3,10 @@ import { Box } from '@mui/material'
 import { v4 as uuid } from 'uuid'
 import { useCanvas, usePan, useZoom } from '../../hooks'
 import { useCanvasStore, useToolStore, useHistoryStore, useThemeStore } from '../../stores'
-import { screenToCanvas, normalizeRect, isPointInElement } from '../../utils/geometry'
+import { screenToCanvas, normalizeRect, isPointInElement, getElementBounds } from '../../utils/geometry'
 import { SelectionBox } from './SelectionBox'
 import { TextInput } from './TextInput'
-import type { CanvasElement, Point } from '../../types'
+import type { CanvasElement, Point, HandlePosition } from '../../types'
 
 export function Canvas() {
   const { canvasRef } = useCanvas()
@@ -243,24 +243,29 @@ export function Canvas() {
 
       const reader = new FileReader()
       reader.onload = (event) => {
-        const point = getCanvasPoint(e as unknown as React.MouseEvent)
-        const element: CanvasElement = {
-          id: uuid(),
-          type: 'image',
-          x: point.x,
-          y: point.y,
-          width: 200,
-          height: 200,
-          rotation: 0,
-          strokeColor: 'transparent',
-          fillColor: 'transparent',
-          strokeWidth: 0,
-          opacity: 1,
-          imageData: event.target?.result as string,
-          seed: Math.floor(Math.random() * 2147483647),
+        const dataUrl = event.target?.result as string
+        const img = new Image()
+        img.onload = () => {
+          const point = getCanvasPoint(e as unknown as React.MouseEvent)
+          const element: CanvasElement = {
+            id: uuid(),
+            type: 'image',
+            x: point.x,
+            y: point.y,
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+            rotation: 0,
+            strokeColor: 'transparent',
+            fillColor: 'transparent',
+            strokeWidth: 0,
+            opacity: 1,
+            imageData: dataUrl,
+            seed: Math.floor(Math.random() * 2147483647),
+          }
+          pushState(elements)
+          addElement(element)
         }
-        pushState(elements)
-        addElement(element)
+        img.src = dataUrl
       }
       reader.readAsDataURL(file)
     },
@@ -279,23 +284,28 @@ export function Canvas() {
 
           const reader = new FileReader()
           reader.onload = (event) => {
-            const element: CanvasElement = {
-              id: uuid(),
-              type: 'image',
-              x: viewport.x / viewport.zoom + 100,
-              y: viewport.y / viewport.zoom + 100,
-              width: 200,
-              height: 200,
-              rotation: 0,
-              strokeColor: 'transparent',
-              fillColor: 'transparent',
-              strokeWidth: 0,
-              opacity: 1,
-              imageData: event.target?.result as string,
-              seed: Math.floor(Math.random() * 2147483647),
+            const dataUrl = event.target?.result as string
+            const img = new Image()
+            img.onload = () => {
+              const element: CanvasElement = {
+                id: uuid(),
+                type: 'image',
+                x: -viewport.x / viewport.zoom + 100,
+                y: -viewport.y / viewport.zoom + 100,
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+                rotation: 0,
+                strokeColor: 'transparent',
+                fillColor: 'transparent',
+                strokeWidth: 0,
+                opacity: 1,
+                imageData: dataUrl,
+                seed: Math.floor(Math.random() * 2147483647),
+              }
+              pushState(elements)
+              addElement(element)
             }
-            pushState(elements)
-            addElement(element)
+            img.src = dataUrl
           }
           reader.readAsDataURL(file)
           break
@@ -311,6 +321,79 @@ export function Canvas() {
   }, [handlePaste])
 
   const dragStartRef = useRef<Point | null>(null)
+  const resizeRef = useRef<{ handle: HandlePosition; startPoint: Point; startBounds: { x: number; y: number; width: number; height: number } } | null>(null)
+
+  const handleResizeStart = useCallback(
+    (handle: HandlePosition, e: React.MouseEvent) => {
+      if (selectedIds.length !== 1) return
+      const element = elements.find((el) => el.id === selectedIds[0])
+      if (!element) return
+      
+      const point = getCanvasPoint(e)
+      const bounds = getElementBounds(element)
+      resizeRef.current = {
+        handle,
+        startPoint: point,
+        startBounds: bounds,
+      }
+    },
+    [selectedIds, elements, getCanvasPoint]
+  )
+
+  const handleResize = useCallback(
+    (e: React.MouseEvent) => {
+      if (!resizeRef.current || selectedIds.length !== 1) return
+      
+      const element = elements.find((el) => el.id === selectedIds[0])
+      if (!element) return
+      
+      const point = getCanvasPoint(e)
+      const { handle, startPoint, startBounds } = resizeRef.current
+      const dx = point.x - startPoint.x
+      const dy = point.y - startPoint.y
+      
+      let newX = startBounds.x
+      let newY = startBounds.y
+      let newWidth = startBounds.width
+      let newHeight = startBounds.height
+      
+      if (handle.includes('w')) {
+        newX = startBounds.x + dx
+        newWidth = startBounds.width - dx
+      }
+      if (handle.includes('e')) {
+        newWidth = startBounds.width + dx
+      }
+      if (handle.includes('n')) {
+        newY = startBounds.y + dy
+        newHeight = startBounds.height - dy
+      }
+      if (handle.includes('s')) {
+        newHeight = startBounds.height + dy
+      }
+      
+      if (newWidth > 10 && newHeight > 10) {
+        if (element.type === 'text') {
+          updateElement(selectedIds[0], { 
+            x: newX, 
+            y: newY + newHeight,
+            width: newWidth, 
+            height: newHeight 
+          })
+        } else {
+          updateElement(selectedIds[0], { x: newX, y: newY, width: newWidth, height: newHeight })
+        }
+      }
+    },
+    [selectedIds, elements, getCanvasPoint, updateElement]
+  )
+
+  const handleResizeEnd = useCallback(() => {
+    if (resizeRef.current) {
+      pushState(elements)
+    }
+    resizeRef.current = null
+  }, [pushState, elements])
 
   const handleDrag = useCallback(
     (e: React.MouseEvent) => {
@@ -361,19 +444,22 @@ export function Canvas() {
 
   const combinedMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (dragStartRef.current) {
+      if (resizeRef.current) {
+        handleResize(e)
+      } else if (dragStartRef.current) {
         handleDrag(e)
       } else {
         handleMouseMove(e)
       }
     },
-    [handleDrag, handleMouseMove]
+    [handleResize, handleDrag, handleMouseMove]
   )
 
   const combinedMouseUp = useCallback(() => {
+    handleResizeEnd()
     handleDragEnd()
     handleMouseUp()
-  }, [handleDragEnd, handleMouseUp])
+  }, [handleResizeEnd, handleDragEnd, handleMouseUp])
 
   const handleTextSubmit = useCallback(
     (text: string) => {
@@ -430,7 +516,7 @@ export function Canvas() {
           display: 'block',
         }}
       />
-      <SelectionBox />
+      <SelectionBox onResizeStart={handleResizeStart} />
       {textInputPos && (
         <TextInput
           x={textInputPos.x}

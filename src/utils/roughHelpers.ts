@@ -3,15 +3,34 @@ import type { CanvasElement } from '../types'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import { getThemeAwareColor } from '../theme'
 
+const imageCache = new Map<string, HTMLImageElement>()
+
 export function createRoughCanvas(canvas: HTMLCanvasElement): RoughCanvas {
   return rough.canvas(canvas)
+}
+
+function getImage(src: string, onLoad: () => void): HTMLImageElement | null {
+  const cached = imageCache.get(src)
+  if (cached && cached.complete) {
+    return cached
+  }
+  
+  if (!cached) {
+    const img = new window.Image()
+    img.onload = onLoad
+    img.src = src
+    imageCache.set(src, img)
+  }
+  
+  return null
 }
 
 export function drawElement(
   rc: RoughCanvas,
   ctx: CanvasRenderingContext2D,
   element: CanvasElement,
-  isDark: boolean = true
+  isDark: boolean = true,
+  onImageLoad?: () => void
 ) {
   ctx.save()
   ctx.globalAlpha = element.opacity
@@ -92,16 +111,20 @@ export function drawElement(
       break
 
     case 'text':
-      ctx.font = `${element.strokeWidth * 8}px "Virgil", "Segoe Print", "Comic Sans MS", cursive`
-      ctx.fillStyle = strokeColor
-      ctx.fillText(element.text || '', element.x, element.y)
+      {
+        const fontSize = element.height > 0 ? element.height * 0.8 : element.strokeWidth * 8
+        ctx.font = `${fontSize}px "Virgil", "Segoe Print", "Comic Sans MS", cursive`
+        ctx.fillStyle = strokeColor
+        ctx.fillText(element.text || '', element.x, element.y)
+      }
       break
 
     case 'image':
       if (element.imageData) {
-        const img = new Image()
-        img.src = element.imageData
-        ctx.drawImage(img, element.x, element.y, element.width, element.height)
+        const img = getImage(element.imageData, onImageLoad || (() => {}))
+        if (img) {
+          ctx.drawImage(img, element.x, element.y, element.width, element.height)
+        }
       }
       break
   }

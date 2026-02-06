@@ -24,13 +24,13 @@ export function canvasToScreen(
 
 export function getElementBounds(element: CanvasElement): SelectionBounds {
   if (element.type === 'text') {
-    const textWidth = (element.text?.length || 1) * element.strokeWidth * 5
-    const textHeight = element.strokeWidth * 10
+    const textWidth = element.width > 0 ? element.width : (element.text?.length || 1) * element.strokeWidth * 5
+    const textHeight = element.height > 0 ? element.height : element.strokeWidth * 10
     return {
       x: element.x,
       y: element.y - textHeight,
       width: Math.max(textWidth, 20),
-      height: textHeight,
+      height: Math.max(textHeight, 20),
     }
   }
   
