@@ -61,7 +61,7 @@ export const darkTheme = createTheme({
 })
 
 export const getCanvasBackground = (isDark: boolean) => 
-  isDark ? '#1e293b' : '#ffffff'
+  isDark ? '#000000' : '#ffffff'
 
 const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
