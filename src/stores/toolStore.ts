@@ -17,7 +17,7 @@ interface ToolState {
 }
 
 export const useToolStore = create<ToolState>((set, get) => ({
-  activeTool: 'select',
+  activeTool: 'pan',
   strokeColor: '',
   fillColor: 'transparent',
   strokeWidth: 8,
