@@ -1,54 +1,66 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Box } from '@mui/material'
 import { useCanvasStore, useThemeStore } from '../../stores'
 
 interface TextInputProps {
   x: number
   y: number
-  onSubmit: (text: string) => void
+  onSubmit: (text: string, width: number, height: number) => void
   onCancel: () => void
 }
 
-type HandlePosition = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se'
-
-const HANDLE_SIZE = 8
-
-const handles: { position: HandlePosition; cursor: string; style: object }[] = [
-  { position: 'nw', cursor: 'nwse-resize', style: { top: -HANDLE_SIZE / 2, left: -HANDLE_SIZE / 2 } },
-  { position: 'n', cursor: 'ns-resize', style: { top: -HANDLE_SIZE / 2, left: '50%', transform: 'translateX(-50%)' } },
-  { position: 'ne', cursor: 'nesw-resize', style: { top: -HANDLE_SIZE / 2, right: -HANDLE_SIZE / 2 } },
-  { position: 'w', cursor: 'ew-resize', style: { top: '50%', left: -HANDLE_SIZE / 2, transform: 'translateY(-50%)' } },
-  { position: 'e', cursor: 'ew-resize', style: { top: '50%', right: -HANDLE_SIZE / 2, transform: 'translateY(-50%)' } },
-  { position: 'sw', cursor: 'nesw-resize', style: { bottom: -HANDLE_SIZE / 2, left: -HANDLE_SIZE / 2 } },
-  { position: 's', cursor: 'ns-resize', style: { bottom: -HANDLE_SIZE / 2, left: '50%', transform: 'translateX(-50%)' } },
-  { position: 'se', cursor: 'nwse-resize', style: { bottom: -HANDLE_SIZE / 2, right: -HANDLE_SIZE / 2 } },
-]
+const MIN_WIDTH = 100
+const MIN_HEIGHT = 50
+const INITIAL_WIDTH = 200
+const INITIAL_HEIGHT = 80
+const HANDLE_SIZE = 12
 
 export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
   const [value, setValue] = useState('')
-  const [size, setSize] = useState({ width: 200, height: 60 })
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [size, setSize] = useState({ width: INITIAL_WIDTH, height: INITIAL_HEIGHT })
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const resizeRef = useRef<{ handle: HandlePosition; startX: number; startY: number; startSize: { width: number; height: number }; startPos: { x: number; y: number } } | null>(null)
+  const resizeRef = useRef<{ startX: number; startY: number; startW: number; startH: number } | null>(null)
   const { viewport } = useCanvasStore()
   const { isDark } = useThemeStore()
-  const textColor = isDark ? '#ffffff' : '#1e1e1e'
-
-  const fontSize = Math.max(16, Math.min(size.height * 0.4, 120))
+  
+  const screenX = x * viewport.zoom + viewport.x
+  const screenY = y * viewport.zoom + viewport.y
+  const fontSize = Math.max(16, size.height * 0.35)
 
   useEffect(() => {
-    setTimeout(() => {
-      inputRef.current?.focus()
-    }, 10)
+    const timer = setTimeout(() => {
+      textareaRef.current?.focus()
+    }, 50)
+    return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        if (value.trim()) {
+          onSubmit(value, size.width, size.height)
+        } else {
+          onCancel()
+        }
+      }
+    }
+
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 200)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [value, size, onSubmit, onCancel])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation()
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (value.trim()) {
-        onSubmit(value)
+        onSubmit(value, size.width, size.height)
       } else {
         onCancel()
       }
@@ -58,115 +70,86 @@ export function TextInput({ x, y, onSubmit, onCancel }: TextInputProps) {
     }
   }
 
-  const handleResizeStart = useCallback((handle: HandlePosition, e: React.MouseEvent) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     resizeRef.current = {
-      handle,
       startX: e.clientX,
       startY: e.clientY,
-      startSize: { ...size },
-      startPos: { ...position },
+      startW: size.width,
+      startH: size.height,
     }
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (ev: MouseEvent) => {
       if (!resizeRef.current) return
-      
-      const dx = moveEvent.clientX - resizeRef.current.startX
-      const dy = moveEvent.clientY - resizeRef.current.startY
-      const { handle, startSize, startPos } = resizeRef.current
-
-      let newWidth = startSize.width
-      let newHeight = startSize.height
-      let newX = startPos.x
-      let newY = startPos.y
-
-      if (handle.includes('e')) newWidth = Math.max(100, startSize.width + dx)
-      if (handle.includes('w')) {
-        newWidth = Math.max(100, startSize.width - dx)
-        newX = startPos.x + dx
-      }
-      if (handle.includes('s')) newHeight = Math.max(40, startSize.height + dy)
-      if (handle.includes('n')) {
-        newHeight = Math.max(40, startSize.height - dy)
-        newY = startPos.y + dy
-      }
-
-      setSize({ width: newWidth, height: newHeight })
-      setPosition({ x: newX, y: newY })
+      const dx = ev.clientX - resizeRef.current.startX
+      const dy = ev.clientY - resizeRef.current.startY
+      setSize({
+        width: Math.max(MIN_WIDTH, resizeRef.current.startW + dx),
+        height: Math.max(MIN_HEIGHT, resizeRef.current.startH + dy),
+      })
     }
 
     const handleMouseUp = () => {
       resizeRef.current = null
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }, [size, position])
-
-  const screenX = x * viewport.zoom + viewport.x + position.x
-  const screenY = y * viewport.zoom + viewport.y + position.y
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation()
-  }
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [size])
 
   return (
-    <Box
+    <div
       ref={containerRef}
-      onMouseDown={stopPropagation}
-      onClick={stopPropagation}
-      sx={{
+      style={{
         position: 'absolute',
         left: screenX,
-        top: screenY - 8,
+        top: screenY,
         width: size.width,
         height: size.height,
         zIndex: 1000,
       }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     >
       <textarea
-        ref={inputRef}
+        ref={textareaRef}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        autoFocus
         placeholder="Type here..."
         style={{
           width: '100%',
           height: '100%',
-          padding: '8px 12px',
+          padding: 12,
           fontSize,
-          color: textColor,
-          fontFamily: '"Virgil", "Caveat", "Segoe Print", cursive',
-          backgroundColor: 'transparent',
+          lineHeight: 1.3,
+          color: isDark ? '#ffffff' : '#000000',
+          fontFamily: '"Virgil", "Caveat", cursive',
+          background: isDark ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.95)',
+          border: '2px solid #6366f1',
           borderRadius: 8,
-          border: '2px dashed #6366f1',
-          resize: 'none',
           outline: 'none',
-          overflow: 'auto',
+          resize: 'none',
+          overflow: 'hidden',
           boxSizing: 'border-box',
         }}
       />
-      {handles.map((handle) => (
-        <Box
-          key={handle.position}
-          onMouseDown={(e) => handleResizeStart(handle.position, e)}
-          sx={{
-            position: 'absolute',
-            width: HANDLE_SIZE,
-            height: HANDLE_SIZE,
-            backgroundColor: '#ffffff',
-            border: '2px solid #6366f1',
-            borderRadius: '2px',
-            cursor: handle.cursor,
-            zIndex: 10,
-            ...handle.style,
-          }}
-        />
-      ))}
-    </Box>
+      <div
+        onMouseDown={handleResizeStart}
+        style={{
+          position: 'absolute',
+          right: -HANDLE_SIZE / 2,
+          bottom: -HANDLE_SIZE / 2,
+          width: HANDLE_SIZE,
+          height: HANDLE_SIZE,
+          background: '#6366f1',
+          borderRadius: 2,
+          cursor: 'nwse-resize',
+        }}
+      />
+    </div>
   )
 }
