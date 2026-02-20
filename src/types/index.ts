@@ -49,7 +49,7 @@ export interface SelectionBounds {
 }
 
 export type ToolType = 
-  | 'select'
+  | 'pan'
   | 'rectangle'
   | 'ellipse'
   | 'line'
@@ -57,7 +57,6 @@ export type ToolType =
   | 'pen'
   | 'text'
   | 'disappearing-pen'
-  | 'pan'
 
 export interface ToolState {
   activeTool: ToolType
