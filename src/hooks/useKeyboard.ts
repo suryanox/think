@@ -3,7 +3,8 @@ import { useToolStore, useCanvasStore, useHistoryStore } from '../stores'
 import type { ToolType } from '../types'
 
 const TOOL_SHORTCUTS: Record<string, ToolType> = {
-  v: 'select',
+  h: 'pan',
+  v: 'pan',
   r: 'rectangle',
   o: 'ellipse',
   l: 'line',
@@ -11,13 +12,12 @@ const TOOL_SHORTCUTS: Record<string, ToolType> = {
   p: 'pen',
   t: 'text',
   d: 'disappearing-pen',
-  h: 'pan',
 }
 
 export function useKeyboard() {
   const { setTool } = useToolStore()
-  const { selectedIds, deleteElements } = useCanvasStore()
-  const { undo, redo } = useHistoryStore()
+  const { selectedIds, deleteElements, copySelectedElements, pasteElements } = useCanvasStore()
+  const { undo, redo, pushState } = useHistoryStore()
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -41,6 +41,20 @@ export function useKeyboard() {
             e.preventDefault()
             redo()
             break
+          case 'c':
+            e.preventDefault()
+            if (selectedIds.length > 0) {
+              copySelectedElements()
+            }
+            break
+          case 'v':
+            e.preventDefault()
+            const { clipboard, elements } = useCanvasStore.getState()
+            if (clipboard.length > 0) {
+              pushState(elements)
+              pasteElements()
+            }
+            break
         }
         return
       }
@@ -52,6 +66,8 @@ export function useKeyboard() {
 
       if (key === 'delete' || key === 'backspace') {
         if (selectedIds.length > 0) {
+          const { elements } = useCanvasStore.getState()
+          pushState(elements)
           deleteElements(selectedIds)
         }
       }
@@ -60,7 +76,7 @@ export function useKeyboard() {
         useCanvasStore.getState().setSelectedIds([])
       }
     },
-    [setTool, selectedIds, deleteElements, undo, redo]
+    [setTool, selectedIds, deleteElements, undo, redo, copySelectedElements, pasteElements, pushState]
   )
 
   useEffect(() => {
