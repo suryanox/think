@@ -1,6 +1,5 @@
 import { Box, Paper } from '@mui/material'
 import {
-  NearMe,
   CropSquare,
   RadioButtonUnchecked,
   Remove,
@@ -55,8 +54,7 @@ export function Toolbar() {
       }}
     >
       <ToolGroup>
-        <ToolButton tool="select" icon={<NearMe />} label="Select" shortcut="V" />
-        <ToolButton tool="pan" icon={<PanTool />} label="Pan" shortcut="H" />
+        <ToolButton tool="pan" icon={<PanTool />} label="Hand" shortcut="H" />
       </ToolGroup>
 
       <ToolGroup>
