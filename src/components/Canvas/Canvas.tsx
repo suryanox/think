@@ -75,7 +75,7 @@ export function Canvas() {
       const defaultColor = isDark ? '#ffffff' : '#1e1e1e'
       const base: CanvasElement = {
         id: uuid(),
-        type: activeTool === 'select' || activeTool === 'pan' ? 'rectangle' : activeTool,
+        type: activeTool === 'pan' ? 'rectangle' : activeTool,
         x: point.x,
         y: point.y,
         width: 0,
@@ -114,27 +114,6 @@ export function Canvas() {
       if (spacePressed.current || startPan(e)) return
 
       const point = getCanvasPoint(e)
-
-      if (activeTool === 'select') {
-        const clickedElement = [...elements].reverse().find((el) => isPointInElement(point, el))
-
-        if (clickedElement) {
-          if (e.shiftKey) {
-            if (selectedIds.includes(clickedElement.id)) {
-              setSelectedIds(selectedIds.filter((id) => id !== clickedElement.id))
-            } else {
-              setSelectedIds([...selectedIds, clickedElement.id])
-            }
-          } else {
-            if (!selectedIds.includes(clickedElement.id)) {
-              setSelectedIds([clickedElement.id])
-            }
-          }
-        } else {
-          setSelectedIds([])
-        }
-        return
-      }
 
       if (activeTool === 'text') {
         setTextInputPos(point)
@@ -423,23 +402,33 @@ export function Canvas() {
 
   const combinedMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      if (activeTool === 'select') {
+      if (activeTool === 'pan') {
         const point = getCanvasPoint(e)
         const clickedElement = [...elements].reverse().find((el) => isPointInElement(point, el))
         
         if (clickedElement) {
-          if (!selectedIds.includes(clickedElement.id)) {
-            setSelectedIds([clickedElement.id])
+          if (e.shiftKey) {
+            if (selectedIds.includes(clickedElement.id)) {
+              setSelectedIds(selectedIds.filter((id) => id !== clickedElement.id))
+            } else {
+              setSelectedIds([...selectedIds, clickedElement.id])
+            }
+          } else {
+            if (!selectedIds.includes(clickedElement.id)) {
+              setSelectedIds([clickedElement.id])
+            }
           }
           dragStartRef.current = point
           return
         } else {
           setSelectedIds([])
+          startPan(e, true)
+          return
         }
       }
       handleMouseDown(e)
     },
-    [activeTool, elements, selectedIds, setSelectedIds, getCanvasPoint, handleMouseDown]
+    [activeTool, elements, selectedIds, setSelectedIds, getCanvasPoint, handleMouseDown, startPan]
   )
 
   const combinedMouseMove = useCallback(
@@ -462,16 +451,16 @@ export function Canvas() {
   }, [handleResizeEnd, handleDragEnd, handleMouseUp])
 
   const handleTextSubmit = useCallback(
-    (text: string) => {
+    (text: string, width: number, height: number) => {
       if (!textInputPos) return
       const defaultColor = isDark ? '#ffffff' : '#1e1e1e'
       const element: CanvasElement = {
         id: uuid(),
         type: 'text',
         x: textInputPos.x,
-        y: textInputPos.y,
-        width: text.length * strokeWidth * 5,
-        height: strokeWidth * 10,
+        y: textInputPos.y + height,
+        width,
+        height,
         rotation: 0,
         strokeColor: effectiveStrokeColor || defaultColor,
         fillColor: 'transparent',
