@@ -74,6 +74,7 @@ export function useKeyboard() {
 
       if (key === 'escape') {
         useCanvasStore.getState().setSelectedIds([])
+        setTool('pan')
       }
     },
     [setTool, selectedIds, deleteElements, undo, redo, copySelectedElements, pasteElements, pushState]
