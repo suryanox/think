@@ -1,20 +1,15 @@
 import { useState, useRef } from 'react'
 import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tooltip, Divider } from '@mui/material'
-import { Menu as MenuIcon, FileOpen, Save, Delete, Code } from '@mui/icons-material'
+import { Menu as MenuIcon, FileOpen, Delete, Code } from '@mui/icons-material'
 import { useCanvasStore, useHistoryStore } from '../../stores'
 import { downloadJSON, importFromJSON } from '../../utils/export'
-import { saveToLocalStorage, clearLocalStorage } from '../../utils/storage'
+import { clearLocalStorage } from '../../utils/storage'
 
 export function FileMenu() {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { elements, setElements, clearCanvas } = useCanvasStore()
   const { clear: clearHistory } = useHistoryStore()
-
-  const handleSave = () => {
-    saveToLocalStorage(elements)
-    setAnchorEl(null)
-  }
 
   const handleExportJSON = () => {
     downloadJSON(elements)
@@ -65,12 +60,6 @@ export function FileMenu() {
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
-        <MenuItem onClick={handleSave}>
-          <ListItemIcon>
-            <Save fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Save to browser</ListItemText>
-        </MenuItem>
         <MenuItem onClick={handleImport}>
           <ListItemIcon>
             <FileOpen fontSize="small" />
