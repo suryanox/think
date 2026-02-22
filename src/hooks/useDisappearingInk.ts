@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useCanvasStore } from '../stores'
 
-const FADE_DELAY = 3000
+const FADE_DELAY = 2500
 const FADE_DURATION = 1500
 
 export function useDisappearingInk() {
