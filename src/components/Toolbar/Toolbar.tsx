@@ -8,6 +8,7 @@ import {
   TextFields,
   AutoFixHigh,
   PanTool,
+  Code as CodeIcon,
 } from '@mui/icons-material'
 import { ToolButton } from './ToolButton'
 import { ColorPicker } from './ColorPicker'
@@ -68,6 +69,7 @@ export function Toolbar() {
         <ToolButton tool="pen" icon={<Create />} label="Pen" shortcut="P" />
         <ToolButton tool="disappearing-pen" icon={<AutoFixHigh />} label="Disappearing Pen" shortcut="D" />
         <ToolButton tool="text" icon={<TextFields />} label="Text" shortcut="T" />
+        <ToolButton tool="code" icon={<CodeIcon />} label="Code" shortcut="/" />
       </ToolGroup>
 
       <ToolGroup>
