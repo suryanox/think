@@ -7,6 +7,7 @@ export type ElementType =
   | 'text'
   | 'image'
   | 'disappearing-pen'
+  | 'code'
 
 export interface Point {
   x: number
@@ -33,6 +34,7 @@ export interface CanvasElement {
   seed?: number
   createdAt?: number
   fadeStartTime?: number
+  code?: string
 }
 
 export interface Viewport {
@@ -57,6 +59,7 @@ export type ToolType =
   | 'pen'
   | 'text'
   | 'disappearing-pen'
+  | 'code'
 
 export interface ToolState {
   activeTool: ToolType
