@@ -6,6 +6,7 @@ import { useCanvasStore, useToolStore, useHistoryStore, useThemeStore } from '..
 import { screenToCanvas, normalizeRect, isPointInElement, getElementBounds } from '../../utils/geometry'
 import { SelectionBox } from './SelectionBox'
 import { TextInput } from './TextInput'
+import { CodeElement } from '../Code'
 import type { CanvasElement, Point, HandlePosition } from '../../types'
 
 export function Canvas() {
@@ -117,6 +118,27 @@ export function Canvas() {
 
       if (activeTool === 'text') {
         setTextInputPos(point)
+        return
+      }
+
+      if (activeTool === 'code') {
+        const codeElement: CanvasElement = {
+          id: uuid(),
+          type: 'code',
+          x: point.x,
+          y: point.y,
+          width: 500,
+          height: 400,
+          rotation: 0,
+          strokeColor: 'transparent',
+          fillColor: 'transparent',
+          strokeWidth: 0,
+          opacity: 1,
+          code: `fn main() {\n    println!("Hello, Rust!");\n}`,
+          seed: Math.floor(Math.random() * 2147483647),
+        }
+        pushState(elements)
+        addElement(codeElement)
         return
       }
 
@@ -514,6 +536,11 @@ export function Canvas() {
           onCancel={handleTextCancel}
         />
       )}
+      {elements
+        .filter((el) => el.type === 'code')
+        .map((el) => (
+          <CodeElement key={el.id} element={el} viewport={viewport} />
+        ))}
     </Box>
   )
 }
