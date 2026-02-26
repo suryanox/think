@@ -12,6 +12,7 @@ const TOOL_SHORTCUTS: Record<string, ToolType> = {
   p: 'pen',
   t: 'text',
   d: 'disappearing-pen',
+  '/': 'code',
 }
 
 export function useKeyboard() {
